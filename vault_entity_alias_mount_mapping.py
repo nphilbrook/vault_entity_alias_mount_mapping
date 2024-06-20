@@ -16,8 +16,8 @@ import logging
 import argparse
 from looseversion import LooseVersion
 from EnvDefault import env_default
-import pprint
-version = '0.0.5'
+
+version = '0.0.6'
 
 minimum_vault_version = "1.11"
 
