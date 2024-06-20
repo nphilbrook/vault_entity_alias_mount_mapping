@@ -16,7 +16,7 @@ import logging
 import argparse
 from looseversion import LooseVersion
 from EnvDefault import env_default
-
+import pprint
 version = '0.0.5'
 
 minimum_vault_version = "1.11"
@@ -182,13 +182,20 @@ def health_check(client):
   # get Vault health
   error = 0
   try:
-    health = client.sys.read_health_status(method='GET')
-    if not health['initialized']:
-      logging.error('[error]: Vault is not initialized.')
+    health = client.sys.read_health_status(method='GET', performance_standby_code=200)
+    # hvac returns a requests.Response object for non-200 responses, but the
+    # parsed JSON data for 200 responses.
+    if not isinstance(health, {}.__class__):
       error = 1
-    if health['sealed']:
-      logging.error('[error]: Vault is sealed.')
-      error = 1
+      logging.error(f"Non-200 response code {health.status_code} from Vault during health check.")
+      logging.debug(f"Vault Response was: {health.content}")
+    else:
+      if not health['initialized']:
+        logging.error('[error]: Vault is not initialized.')
+        error = 1
+      if health['sealed']:
+        logging.error('[error]: Vault is sealed.')
+        error = 1
     if error == 1:
       sys.exit(1)
     return(health['version'])
